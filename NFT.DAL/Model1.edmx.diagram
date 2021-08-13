@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="d4f93a64fbb24140a0cf67286b3725a0" Name="Diagram1">
+        <EntityTypeShape EntityType="NFTProjectModel.User" Width="1.5" PointX="0.75" PointY="0.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="NFTProjectModel.NFTLedger" Width="1.5" PointX="7.5" PointY="6" />
+        <EntityTypeShape EntityType="NFTProjectModel.Item" Width="1.5" PointX="3" PointY="5.5" />
+        <AssociationConnector Association="NFTProjectModel.FK_Items_Users" />
+        <EntityTypeShape EntityType="NFTProjectModel.Approvenft" Width="1.5" PointX="7.5" PointY="1.5" />
+        <EntityTypeShape EntityType="NFTProjectModel.deployednft" Width="1.5" PointX="5.25" PointY="1" />
+        <AssociationConnector Association="NFTProjectModel.FK_Approvenft_deployednft" />
+        <AssociationConnector Association="NFTProjectModel.FK_ItemLedger_SmartContracts" />
+        <AssociationConnector Association="NFTProjectModel.FK_SmartContracts_Items" />
+        </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

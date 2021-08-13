@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="NFTProjectModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <EntityType Name="Approvenft">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="DeployedNFTId" Type="int" Nullable="false" />
+    <Property Name="FromAddress" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="ToCurrentOwnerAddress" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="IsApproved" Type="bit" Nullable="false" />
+    <Property Name="createDateTime" Type="datetime" />
+    <Property Name="updateDatetime" Type="datetime" />
+  </EntityType>
+  <EntityType Name="deployednft">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="ItemId" Type="int" Nullable="false" />
+    <Property Name="ABI" Type="nvarchar(max)" />
+    <Property Name="GasPrice" Type="decimal" Precision="18" Scale="4" />
+    <Property Name="DeployedDatetime" Type="datetime" Nullable="false" />
+    <Property Name="TransactionHash" Type="nvarchar(max)" />
+    <Property Name="ContractAddress" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="OwnerWalletAddress" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="IsVerified" Type="bit" Nullable="false" />
+    <Property Name="IsApproved" Type="bit" Nullable="false" />
+    <Property Name="IsSold" Type="bit" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Items">
+    <Key>
+      <PropertyRef Name="ItemId" />
+    </Key>
+    <Property Name="ItemId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="UserId" Type="int" Nullable="false" />
+    <Property Name="ItemHash" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="ItemDescription" Type="nvarchar(max)" />
+    <Property Name="ItemName" Type="nvarchar" MaxLength="50" />
+    <Property Name="ItemSymbol" Type="nvarchar" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="NFTLedger">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="SmartContractId" Type="int" Nullable="false" />
+    <Property Name="CurrentOwner" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="TransferFrom" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="TransferTo" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="Price" Type="decimal" Precision="18" Scale="4" />
+  </EntityType>
+  <EntityType Name="Users">
+    <Key>
+      <PropertyRef Name="UserId" />
+    </Key>
+    <Property Name="UserId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+    <Property Name="WalletAddress" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="Email" Type="nvarchar" MaxLength="50" />
+    <Property Name="IsDeleted" Type="bit" Nullable="false" />
+  </EntityType>
+  <Association Name="FK_Approvenft_deployednft">
+    <End Role="deployednft" Type="Self.deployednft" Multiplicity="1" />
+    <End Role="Approvenft" Type="Self.Approvenft" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="deployednft">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Approvenft">
+        <PropertyRef Name="DeployedNFTId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ItemLedger_SmartContracts">
+    <End Role="deployednft" Type="Self.deployednft" Multiplicity="1" />
+    <End Role="NFTLedger" Type="Self.NFTLedger" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="deployednft">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="NFTLedger">
+        <PropertyRef Name="SmartContractId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_Items_Users">
+    <End Role="Users" Type="Self.Users" Multiplicity="1" />
+    <End Role="Items" Type="Self.Items" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="UserId" />
+      </Principal>
+      <Dependent Role="Items">
+        <PropertyRef Name="UserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_SmartContracts_Items">
+    <End Role="Items" Type="Self.Items" Multiplicity="1" />
+    <End Role="deployednft" Type="Self.deployednft" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Items">
+        <PropertyRef Name="ItemId" />
+      </Principal>
+      <Dependent Role="deployednft">
+        <PropertyRef Name="ItemId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="NFTProjectModelStoreContainer">
+    <EntitySet Name="Approvenft" EntityType="Self.Approvenft" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="deployednft" EntityType="Self.deployednft" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="Items" EntityType="Self.Items" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="NFTLedger" EntityType="Self.NFTLedger" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="Users" EntityType="Self.Users" Schema="dbo" store:Type="Tables" />
+    <AssociationSet Name="FK_Approvenft_deployednft" Association="Self.FK_Approvenft_deployednft">
+      <End Role="deployednft" EntitySet="deployednft" />
+      <End Role="Approvenft" EntitySet="Approvenft" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ItemLedger_SmartContracts" Association="Self.FK_ItemLedger_SmartContracts">
+      <End Role="deployednft" EntitySet="deployednft" />
+      <End Role="NFTLedger" EntitySet="NFTLedger" />
+    </AssociationSet>
+    <AssociationSet Name="FK_Items_Users" Association="Self.FK_Items_Users">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Items" EntitySet="Items" />
+    </AssociationSet>
+    <AssociationSet Name="FK_SmartContracts_Items" Association="Self.FK_SmartContracts_Items">
+      <End Role="Items" EntitySet="Items" />
+      <End Role="deployednft" EntitySet="deployednft" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>

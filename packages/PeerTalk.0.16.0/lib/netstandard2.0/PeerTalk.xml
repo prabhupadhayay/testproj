@@ -1,0 +1,3629 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PeerTalk</name>
+    </assembly>
+    <members>
+        <member name="T:PeerTalk.AutoDialer">
+            <summary>
+              Maintains a minimum number of peer connections.
+            </summary>
+            <remarks>
+              Listens to the <see cref="T:PeerTalk.Swarm"/> and automically dials a
+              new <see cref="T:Ipfs.Peer"/> when required.
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.AutoDialer.DefaultMinConnections">
+            <summary>
+              The default minimum number of connections to maintain (16).
+            </summary>
+        </member>
+        <member name="M:PeerTalk.AutoDialer.#ctor(PeerTalk.Swarm)">
+            <summary>
+              Creates a new instance of the <see cref="T:PeerTalk.AutoDialer"/> class.
+            </summary>
+            <param name="swarm">
+              Provides access to other peers.
+            </param>
+        </member>
+        <member name="M:PeerTalk.AutoDialer.Dispose(System.Boolean)">
+            <summary>
+             Releases the unmanaged and optionally managed resources.
+            </summary>
+            <param name="disposing">
+              <b>true</b> to release both managed and unmanaged resources; <b>false</b> 
+              to release only unmanaged resources.
+            </param>
+        </member>
+        <member name="M:PeerTalk.AutoDialer.Dispose">
+            <summary>
+              Performs application-defined tasks associated with freeing, 
+              releasing, or resetting unmanaged resources.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.AutoDialer.MinConnections">
+            <summary>
+              The low water mark for peer connections.
+            </summary>
+            <value>
+              Defaults to <see cref="F:PeerTalk.AutoDialer.DefaultMinConnections"/>.
+            </value>
+            <remarks>
+              Setting this to zero will basically disable the auto dial features.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.AutoDialer.OnPeerDiscovered(System.Object,Ipfs.Peer)">
+            <summary>
+              Called when the swarm has a new peer.
+            </summary>
+            <param name="sender">
+              The swarm of peers.
+            </param>
+            <param name="peer">
+              The peer that was discovered.
+            </param>
+            <remarks>
+              If the <see cref="P:PeerTalk.AutoDialer.MinConnections"/> is not reached, then the
+              <paramref name="peer"/> is dialed.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.AutoDialer.OnPeerDisconnected(System.Object,Ipfs.Peer)">
+            <summary>
+              Called when the swarm has lost a connection to a peer.
+            </summary>
+            <param name="sender">
+              The swarm of peers.
+            </param>
+            <param name="disconnectedPeer">
+              The peer that was disconnected.
+            </param>
+            <remarks>
+              If the <see cref="P:PeerTalk.AutoDialer.MinConnections"/> is not reached, then another
+              peer is dialed.
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.BlackList`1">
+            <summary>
+              A sequence of targets that are not approved.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+            <remarks>
+              Only targets that are not defined will pass.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.BlackList`1.IsAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.ConnectionManager">
+            <summary>
+              Manages the peer connections in a <see cref="T:PeerTalk.Swarm"/>.
+            </summary>
+            <remarks>
+              Enforces that only one connection exists to the <see cref="T:Ipfs.Peer"/>.  This
+              prevents the race condition when two simultaneously connect to each other.
+              <para>
+              TODO: Enforces a maximum number of open connections.
+              </para>
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.ConnectionManager.connections">
+            <summary>
+              The connections to other peers. Key is the base58 hash of the peer ID.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.ConnectionManager.PeerDisconnected">
+            <summary>
+              Raised when a peer's connection is closed.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.ConnectionManager.Connections">
+            <summary>
+              Gets the current active connections.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.IsConnected(Ipfs.Peer)">
+            <summary>
+              Determines if a connection exists to the specified peer.
+            </summary>
+            <param name="peer">
+              Another peer.
+            </param>
+            <returns>
+              <b>true</b> if there is a connection to the <paramref name="peer"/> and
+              the connection is active; otherwise <b>false</b>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.TryGet(Ipfs.Peer,PeerTalk.PeerConnection@)">
+            <summary>
+               Gets the connection to the peer.
+            </summary>
+            <param name="peer">
+              A peer.
+            </param>
+            <param name="connection">
+              The connection to the peer.
+            </param>
+            <returns>
+              <b>true</b> if a connection exists; otherwise <b>false</b>.
+            </returns>
+            <remarks>
+              If the connection's underlaying <see cref="P:PeerTalk.PeerConnection.Stream"/>
+              is closed, then the connection is removed.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.Add(PeerTalk.PeerConnection)">
+            <summary>
+              Adds a new connection.
+            </summary>
+            <param name="connection">
+              The <see cref="T:PeerTalk.PeerConnection"/> to add.
+            </param>
+            <returns>
+              The connection that should be used.
+            </returns>
+            <remarks>
+              If a connection already exists to the peer, the specified
+              <paramref name="connection"/> is closed and existing connection
+              is returned.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.Remove(PeerTalk.PeerConnection)">
+            <summary>
+              Remove a connection.
+            </summary>
+            <param name="connection">
+              The <see cref="T:PeerTalk.PeerConnection"/> to remove.
+            </param>
+            <returns>
+              <b>true</b> if the connection was removed; otherwise, <b>false</b>.
+            </returns>
+            <remarks>
+               The <paramref name="connection"/> is removed from the list of
+               connections and is closed.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.Remove(Ipfs.MultiHash)">
+            <summary>
+              Remove and close all connection to the peer ID.
+            </summary>
+            <param name="id">
+              The ID of a <see cref="T:Ipfs.Peer"/> to remove.
+            </param>
+            <returns>
+              <b>true</b> if a connection was removed; otherwise, <b>false</b>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.ConnectionManager.Clear">
+            <summary>
+              Removes and closes all connections.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Cryptography.CtrStreamCipher">
+            <summary>
+              The CTR cipher as a stream.
+            </summary>
+            <remarks>
+              A copy of <see href="https://github.com/onovotny/bc-csharp/blob/netstandard/crypto/src/crypto/modes/SicBlockCipher.cs">SicBlockCipher</see> 
+              that implements <see cref="T:Org.BouncyCastle.Crypto.IStreamCipher"/>.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Cryptography.CtrStreamCipher.#ctor(Org.BouncyCastle.Crypto.IBlockCipher)">
+            <summary>
+              Creates a new instance of the <see cref="T:PeerTalk.Cryptography.CtrStreamCipher"/> with
+              the specified cipher.
+            </summary>
+            <param name="cipher">
+              The cipher to produce the output counter.  Typically
+              <see cref="T:Org.BouncyCastle.Crypto.Engines.AesEngine"/>.
+            </param>
+        </member>
+        <member name="P:PeerTalk.Cryptography.CtrStreamCipher.AlgorithmName">
+            <summary>
+              The name of this algorithm.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Cryptography.CtrStreamCipher.Init(System.Boolean,Org.BouncyCastle.Crypto.ICipherParameters)">
+            <summary>
+              Init the cipher.
+            </summary>
+            <param name="forEncryption">
+              Ignored.
+            </param>
+            <param name="parameters">
+              Must be a <see cref="T:Org.BouncyCastle.Crypto.Parameters.ParametersWithIV"/>.
+            </param>
+            <example>
+            var encrypt = new CtrStreamCipher(new AesEngine());
+            var p = new ParametersWithIV(new KeyParameter(key), iv);
+            encrypt.Init(true, p);
+            </example>
+        </member>
+        <member name="M:PeerTalk.Cryptography.CtrStreamCipher.Reset">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Cryptography.CtrStreamCipher.ProcessBytes(System.Byte[],System.Int32,System.Int32,System.Byte[],System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Cryptography.CtrStreamCipher.ReturnByte(System.Byte)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Cryptography.EphermalKey">
+            <summary>
+              A short term key on a curve.
+            </summary>
+            <remarks>
+              Ephemeral keys are different from other keys in IPFS; they are NOT
+              protobuf encoded and are NOT self describing.  The encoding is an
+              uncompressed ECPoint; the first byte s a 4 and followed by X and Y co-ordinates.
+              <para>
+              It as assummed that the curve name is known a priori.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Cryptography.EphermalKey.PublicKeyBytes">
+            <summary>
+              Gets the IPFS encoding of the public key.
+            </summary>
+            <returns>
+              Returns the uncompressed EC point.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Cryptography.EphermalKey.GenerateSharedSecret(PeerTalk.Cryptography.EphermalKey)">
+            <summary>
+              Create a shared secret between this key and another.
+            </summary>
+            <param name="other">
+              Another ephermal key.
+            </param>
+            <returns>
+              The shared secret as a byte array.
+            </returns>
+            <remarks>
+              Uses the ECDH agreement algorithm to generate the shared secet.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Cryptography.EphermalKey.CreatePublicKeyFromIpfs(System.String,System.Byte[])">
+            <summary>
+              Create a public key from the IPFS ephermal encoding.
+            </summary>
+            <param name="curveName">
+              The name of the curve, for example "P-256".
+            </param>
+            <param name="bytes">
+              The IPFS encoded ephermal key.
+            </param>
+        </member>
+        <member name="M:PeerTalk.Cryptography.EphermalKey.Generate(System.String)">
+            <summary>
+              Create a new ephermal key on the curve.
+            </summary>
+            <param name="curveName">
+              The name of the curve, for example "P-256".
+            </param>
+            <returns>
+              The new created emphermal key.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Cryptography.Key">
+            <summary>
+              An asymmetric key.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Cryptography.Key.Verify(System.Byte[],System.Byte[])">
+            <summary>
+              Verify that signature matches the data.
+            </summary>
+            <param name="data">
+              The data to check.
+            </param>
+            <param name="signature">
+              The supplied signature of the <paramref name="data"/>.
+            </param>
+            <exception cref="T:System.IO.InvalidDataException">
+              The <paramref name="data"/> does match the <paramref name="signature"/>.
+            </exception>
+        </member>
+        <member name="M:PeerTalk.Cryptography.Key.Sign(System.Byte[])">
+            <summary>
+              Create a signature for the data.
+            </summary>
+            <param name="data">
+              The data to sign.
+            </param>
+            <returns>
+              The signature.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Cryptography.Key.CreatePublicKeyFromIpfs(System.Byte[])">
+            <summary>
+              Create a public key from the IPFS message.
+            </summary>
+            <param name="bytes">
+              The IPFS encoded protobuf PublicKey message.
+            </param>
+            <returns>
+              The public key.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Cryptography.Key.CreatePrivateKey(Org.BouncyCastle.Crypto.AsymmetricKeyParameter)">
+            <summary>
+              Create the key from the Bouncy Castle private key.
+            </summary>
+            <param name="privateKey">
+              The Bouncy Castle private key.
+            </param>
+        </member>
+        <member name="T:PeerTalk.Cryptography.PreSharedKey">
+            <summary>
+              A secret (symmetric) key shared among some entities.
+            </summary>
+            <remarks>
+              This is specifically used for nodes in a private network.
+            </remarks>
+            <seealso href="https://github.com/libp2p/specs/blob/master/pnet/Private-Networks-PSK-V1.md"/>
+        </member>
+        <member name="P:PeerTalk.Cryptography.PreSharedKey.Value">
+            <summary>
+              The key value.
+            </summary>
+            <value>
+              The value as a byte array.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Cryptography.PreSharedKey.Length">
+            <summary>
+              The length of the key's value.
+            </summary>
+            <value>
+              The length in bits.
+            </value>
+        </member>
+        <member name="M:PeerTalk.Cryptography.PreSharedKey.Fingerprint">
+            <summary>
+              Gets an ID for the key.
+            </summary>
+            <returns>
+              A byte array that can be used as an identifier for the key.
+            </returns>
+            <remarks>
+              C# implementation of the GO code at 
+              <see href="https://github.com/libp2p/go-libp2p-pnet/blob/bed5e6afdf9099121029f6fb675be12a50196114/fingerprint.go#L10"/>.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Cryptography.PreSharedKey.Generate(System.Int32)">
+            <summary>
+              Generate a new value of the specified length.
+            </summary>
+            <param name="length">
+              The length in bits of the new key value, defaults to 256.
+            </param>
+            <returns>
+              <b>this</b> for a fluent design.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Cryptography.PreSharedKey.Export(System.IO.TextWriter,System.String)">
+            <summary>
+              Write the key to text stream.
+            </summary>
+            <param name="text">
+              A text writer.
+            </param>
+            <param name="format">
+              Determines how the key <see cref="P:PeerTalk.Cryptography.PreSharedKey.Value"/> is formatted.  Can be
+              "base16" or "base64".  Defaults to "base16".
+            </param>
+            <remarks>
+              The key is writen as three lines 
+              (1) the codec name "/key/swarm/psk/1.0.0/"
+              (2) the base encoding  "/base16/" or "/base64/", 
+              (3) the key value in the base encoding
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Cryptography.PreSharedKey.Import(System.IO.TextReader)">
+            <summary>
+              Read the key from the text stream.
+            </summary>
+            <param name="text">
+              A text reader.
+            </param>
+        </member>
+        <member name="T:PeerTalk.Cryptography.StretchedKey">
+            <summary>
+              Symmetric keys for SECIO.
+            </summary>
+            <remarks>
+              Keys derived from a shared secret.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Cryptography.StretchedKey.IV">
+            <summary>
+              The nonce.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Cryptography.StretchedKey.MacKey">
+            <summary>
+              The message authentication code.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Cryptography.StretchedKey.CipherKey">
+            <summary>
+              The encyption key.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Cryptography.StretchedKey.Generate(System.String,System.String,System.Byte[],PeerTalk.Cryptography.StretchedKey@,PeerTalk.Cryptography.StretchedKey@)">
+            <summary>
+              Create two streched keys from the shared secret.
+            </summary>
+            <remarks>
+              The is no spec for this.  Copied https://github.com/libp2p/go-libp2p-crypto/blob/0f79fbebcb64f746a636aba79ece0635ec5919e9/key.go#L183
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.Discovery.Bootstrap">
+            <summary>
+              Discovers the pre-configured peers.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Discovery.Bootstrap.PeerDiscovered">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Discovery.Bootstrap.Addresses">
+            <summary>
+              The addresses of the pre-configured peers.
+            </summary>
+            <value>
+              Each address must end with the ipfs protocol and the public ID
+              of the peer.  For example "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            </value>
+        </member>
+        <member name="M:PeerTalk.Discovery.Bootstrap.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.Bootstrap.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Discovery.IPeerDiscovery">
+            <summary>
+              Describes a service that finds a peer.
+            </summary>
+            <remarks>
+              All discovery services must raise the <see cref="E:PeerTalk.Discovery.IPeerDiscovery.PeerDiscovered"/> event.
+            </remarks>
+        </member>
+        <member name="E:PeerTalk.Discovery.IPeerDiscovery.PeerDiscovered">
+            <summary>
+              Raised when a peer is discovered.
+            </summary>
+            <remarks>
+              The peer must contain at least one <see cref="T:Ipfs.MultiAddress"/>.
+              The address must end with the ipfs protocol and the public ID
+              of the peer.  For example "/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.Discovery.Mdns">
+            <summary>
+              Base class to discover peers using Multicast DNS.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Discovery.Mdns.PeerDiscovered">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Discovery.Mdns.LocalPeer">
+            <summary>
+             The local peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Discovery.Mdns.MulticastService">
+            <summary>
+              The Muticast Domain Name Service to use.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Discovery.Mdns.ServiceName">
+            <summary>
+              The service name for our peers.
+            </summary>
+            <value>
+              Defaults to "ipfs".
+            </value>
+        </member>
+        <member name="P:PeerTalk.Discovery.Mdns.Broadcast">
+            <summary>
+              Determines if the local peer responds to a query.
+            </summary>
+            <value>
+              <b>true</b> to answer queries.  Defaults to <b>true</b>.
+            </value>
+        </member>
+        <member name="M:PeerTalk.Discovery.Mdns.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.Mdns.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.Mdns.BuildProfile">
+            <summary>
+              Build the profile which contains the DNS records that are needed
+              to locate and connect to the local peer.
+            </summary>
+            <returns>
+              Describes the service.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Discovery.Mdns.GetAddresses(Makaretu.Dns.Message)">
+            <summary>
+              Get the addresses of the peer in the DNS message.
+            </summary>
+            <param name="message">
+              An answer describing a peer.
+            </param>
+            <returns>
+              All the addresses of the peer.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Discovery.Mdns.OnServiceDiscovery(Makaretu.Dns.ServiceDiscovery)">
+            <summary>
+              Allows derived class to modify the service discovery behavior.
+            </summary>
+            <param name="discovery"></param>
+        </member>
+        <member name="T:PeerTalk.Discovery.MdnsGo">
+            <summary>
+              Discovers peers using Multicast DNS according to
+              go-ipfs v0.4.17
+            </summary>
+            <remarks>
+              GO peers are not using the mDNS multicast address (224.0.0.251)
+              <see href="https://github.com/libp2p/go-libp2p/issues/469"/>.
+              Basically this cannot work until the issue is resolved.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsGo.#ctor">
+            <summary>
+              MDNS go is the same as MdnsJs except that the
+              service name is "_ipfs-discovery._udp".
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Discovery.MdnsJs">
+            <summary>
+              Discovers peers using Multicast DNS according to
+              js-ipfs v0.32.3
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsJs.#ctor">
+            <summary>
+              Creates a new instance of the class.  Sets the <see cref="P:PeerTalk.Discovery.Mdns.ServiceName"/>
+              to "ipfs".
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsJs.OnServiceDiscovery(Makaretu.Dns.ServiceDiscovery)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsJs.BuildProfile">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsJs.GetAddresses(Makaretu.Dns.Message)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Discovery.MdnsNext">
+            <summary>
+              Discovers peers using Multicast DNS according to
+              <see href="https://github.com/libp2p/specs/blob/master/discovery/mdns.md"/>
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsNext.#ctor">
+            <summary>
+              Creates a new instance of the class.  Sets the <see cref="P:PeerTalk.Discovery.Mdns.ServiceName"/>
+              to "_p2p._udp".
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsNext.BuildProfile">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsNext.GetAddresses(Makaretu.Dns.Message)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Discovery.MdnsNext.SafeLabel(System.String,System.Int32)">
+            <summary>
+              Creates a safe DNS label.
+            </summary>
+            <param name="label"></param>
+            <param name="maxLength"></param>
+            <returns></returns>
+        </member>
+        <member name="T:PeerTalk.INetworkProtector">
+            <summary>
+              Provides access to a private network of peers.
+            </summary>
+            <remarks>
+              The <see cref="T:PeerTalk.Swarm"/> calls the network protector whenever a connection
+              is being established with another peer.
+            </remarks>
+            <seealso href="https://github.com/libp2p/specs/blob/master/pnet/Private-Networks-PSK-V1.md"/>
+        </member>
+        <member name="M:PeerTalk.INetworkProtector.ProtectAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <summary>
+              Creates a protected stream for the connection.
+            </summary>
+            <param name="connection">
+              A connection between two peers.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the protected stream.
+            </returns>
+            <remarks>
+              <b>ProtectAsync</b> is called after the transport level has established
+              the connection.
+              <para>
+              An exception is thrown if the remote peer is not a member of
+              the private network.
+              </para>
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.IPolicy`1">
+            <summary>
+              A rule that must be enforced.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+        </member>
+        <member name="M:PeerTalk.IPolicy`1.IsAllowed(`0)">
+            <summary>
+              Determines if the target passes the rule.
+            </summary>
+            <param name="target">
+              An object to test against the rule.
+            </param>
+            <returns>
+              <b>true</b> if the <paramref name="target"/> passes the rule;
+              otherwise <b>false</b>.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.IService">
+            <summary>
+              A service is async and can be started and stopped.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.IService.StartAsync">
+            <summary>
+              Start the service.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.IService.StopAsync">
+            <summary>
+              Stop the service.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.MessageTracker">
+            <summary>
+              Maintains a timed cache of message IDs.
+            </summary>
+            <remarks>
+              <see cref="M:PeerTalk.MessageTracker.RecentlySeen(System.String,System.Nullable{System.DateTime})"/> can be used to detect duplicate
+              messages based on its ID.
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.MessageTracker.messages">
+            <summary>
+              The tracked messages.
+            </summary>
+            <remarks>
+              The key is the ID of a message.  The value is the expiry date.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.MessageTracker.Recent">
+            <summary>
+              The definition of recent.
+            </summary>
+            <value>
+              Defaults to 10 minutes.
+            </value>
+            <remarks>
+              Messages that have been in the cache longer that this value
+              will be removed and then be considered as "not seen".
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.MessageTracker.RecentlySeen(System.String,System.Nullable{System.DateTime})">
+            <summary>
+              Determines if the message has recently been seen.
+            </summary>
+            <param name="id">
+              The unique identifier of a message.
+            </param>
+            <param name="now"></param>
+            <returns>
+              <b>true</b> if the <paramref name="id"/> has been recently seen;
+              otherwise, <b>false</b>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.MessageTracker.Prune(System.DateTime)">
+            <summary>
+              Removes any message that is past its expiry date.
+            </summary>
+            <param name="now">
+              The current clock time.
+            </param>
+        </member>
+        <member name="T:PeerTalk.MultiAddressBlackList">
+            <summary>
+              A collection of filters that are not approved.
+            </summary>
+            <remarks>
+              Only targets that do match a filter will pass.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.IsAllowed(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.Remove(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.MultiAddressBlackList.Count">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.MultiAddressBlackList.IsReadOnly">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.Add(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.Clear">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.Contains(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.CopyTo(Ipfs.MultiAddress[],System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.GetEnumerator">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressBlackList.System#Collections#IEnumerable#GetEnumerator">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.MultiAddressExtensions">
+            <summary>
+              Extensions to <see cref="T:Ipfs.MultiAddress"/>.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.MultiAddressExtensions.IsLoopback(Ipfs.MultiAddress)">
+            <summary>
+              Determines if the multiaddress references
+              a loopback address.
+            </summary>
+            <param name="multiaddress">
+              The mutiaddress to clone.
+            </param>
+            <returns>
+              <b>true</b> for a loopback (127.0.0.1 or ::1).
+            </returns>
+        </member>
+        <member name="M:PeerTalk.MultiAddressExtensions.ResolveAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <summary>
+              Get all the addresses for the specified <see cref="T:Ipfs.MultiAddress"/>.
+            </summary>
+            <param name="multiaddress">
+              The multiaddress to resolve.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is a sequence of possible multiaddresses.
+            </returns>
+            <exception cref="T:System.Net.Sockets.SocketException">
+              The host name cannot be resolved.
+            </exception>
+            <remarks>
+              When the <see cref="P:Ipfs.NetworkProtocol.Name"/> starts with "dns", then a DNS
+              lookup is performed to get all the IP addresses for the host name.  "dn4" and "dns6"
+              will filter the result for IPv4 and IPV6 addresses.
+              <para>
+              When the <see cref="P:Ipfs.NetworkProtocol.Name"/> is "http" or "https", then
+              a "tcp/80" or "tcp/443" is respectively added.
+              </para>
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.MultiAddressWhiteList">
+            <summary>
+              A sequence of filters that are approved.
+            </summary>
+            <remarks>
+              Only targets that are a subset of any filters will pass.  If no filters are defined, then anything
+              passes.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.IsAllowed(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.Remove(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.MultiAddressWhiteList.Count">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.MultiAddressWhiteList.IsReadOnly">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.Add(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.Clear">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.Contains(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.CopyTo(Ipfs.MultiAddress[],System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.GetEnumerator">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.MultiAddressWhiteList.System#Collections#IEnumerable#GetEnumerator">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Multiplex.Header">
+            <summary>
+              The header of a multiplex message.
+            </summary>
+            <remarks>
+              The header of a multiplex message contains the <see cref="F:PeerTalk.Multiplex.Header.StreamId"/> and
+              <see cref="F:PeerTalk.Multiplex.Header.PacketType"/> encoded as a <see cref="T:Ipfs.Varint">variable integer</see>.
+            </remarks>
+            <seealso href="https://github.com/libp2p/mplex"/>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Header.MaxStreamId">
+            <summary>
+              The largest possible value of a <see cref="F:PeerTalk.Multiplex.Header.StreamId"/>.
+            </summary>
+            <value>
+              long.MaxValue >> 3.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Header.MinStreamId">
+            <summary>
+              The smallest possible value of a <see cref="F:PeerTalk.Multiplex.Header.StreamId"/>.
+            </summary>
+            <value>
+              Zero.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Header.StreamId">
+            <summary>
+              The stream identifier.
+            </summary>
+            <value>
+              The session initiator allocates odd IDs and the session receiver allocates even IDs.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Header.PacketType">
+            <summary>
+              The purpose of the multiplex message.
+            </summary>
+            <value>
+              One of the <see cref="F:PeerTalk.Multiplex.Header.PacketType"/> enumeration values.
+            </value>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Header.WriteAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Writes the header to the specified <see cref="T:System.IO.Stream"/>.
+            </summary>
+            <param name="stream">
+              The destination <see cref="T:System.IO.Stream"/> for the header.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Header.ReadAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Reads the header from the specified <see cref="T:System.IO.Stream"/>.
+            </summary>
+            <param name="stream">
+              The source <see cref="T:System.IO.Stream"/> for the header.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.  The task's result
+              is the decoded <see cref="T:PeerTalk.Multiplex.Header"/>.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Multiplex.Muxer">
+            <summary>
+              Supports multiple protocols over a single channel (stream).
+            </summary>
+            <remarks>
+              See <see href="https://github.com/libp2p/mplex"/> for the spec.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Muxer.NextStreamId">
+            <summary>
+              The next stream ID to create.
+            </summary>
+            <value>
+              The session initiator allocates even IDs and the session receiver allocates odd IDs.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Muxer.Channel">
+            <summary>
+              The signle channel to exchange protocol messages.
+            </summary>
+            <value>
+              A <see cref="T:System.IO.Stream"/> to exchange protocol messages.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Muxer.Connection">
+            <summary>
+              The peer connection.
+            </summary>
+            <value>
+              The peer connection that owns this muxer.
+            </value>
+        </member>
+        <member name="E:PeerTalk.Multiplex.Muxer.SubstreamCreated">
+            <summary>
+              Raised when the remote end creates a new stream.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Multiplex.Muxer.SubstreamClosed">
+            <summary>
+              Raised when the remote end closes a stream.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Muxer.Substreams">
+            <summary>
+              The substreams that are open.
+            </summary>
+            <value>
+              The key is stream ID and the value is a <see cref="T:PeerTalk.Multiplex.Substream"/>.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Muxer.Initiator">
+            <summary>
+              Determines if the muxer is the initiator.
+            </summary>
+            <value>
+              <b>true</b> if the muxer is the initiator.
+            </value>
+            <seealso cref="P:PeerTalk.Multiplex.Muxer.Receiver"/>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Muxer.Receiver">
+            <summary>
+              Determines if the muxer is the receiver.
+            </summary>
+            <value>
+              <b>true</b> if the muxer is the receiver.
+            </value>
+            <seealso cref="P:PeerTalk.Multiplex.Muxer.Initiator"/>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Muxer.CreateStreamAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+              Creates a new stream with the specified name.
+            </summary>
+            <param name="name">
+              A name for the stream.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A duplex stream.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Muxer.RemoveStreamAsync(PeerTalk.Multiplex.Substream,System.Threading.CancellationToken)">
+            <summary>
+              Remove the stream.
+            </summary>
+            <remarks>
+              Internal method called by Substream.Dispose().
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Muxer.ProcessRequestsAsync(System.Threading.CancellationToken)">
+            <summary>
+              Read the multiplex packets.
+            </summary>
+            <param name="cancel"></param>
+            <returns></returns>
+            <remarks>
+              A background task that reads and processes the multiplex packets while
+              the <see cref="P:PeerTalk.Multiplex.Muxer.Channel"/> is open and not <paramref name="cancel">cancelled</paramref>.
+              <para>
+              Any encountered errors will close the <see cref="P:PeerTalk.Multiplex.Muxer.Channel"/>.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Muxer.AcquireWriteAccessAsync">
+            <summary>
+              Acquire permission to write to the Channel.
+            </summary>
+            <returns>
+              A task that represents the asynchronous get operation. The task's value
+              is an <see cref="T:System.IDisposable"/> that releases the lock.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Multiplex.PacketType">
+            <summary>
+              The purpose of the multiplex message.
+            </summary>
+            <seealso cref="T:PeerTalk.Multiplex.Header"/>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.NewStream">
+            <summary>
+              Create a new stream.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.MessageReceiver">
+            <summary>
+              A message from the "receiver".
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.MessageInitiator">
+            <summary>
+              A message from the "initiator".
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.CloseReceiver">
+            <summary>
+              Close the stream from the "receiver".
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.CloseInitiator">
+            <summary>
+              Close the stream from the "initiator".
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.ResetReceiver">
+            <summary>
+              Reset the stream from the "receiver".
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Multiplex.PacketType.ResetInitiator">
+            <summary>
+              Reset the stream from the "initiator".
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Multiplex.Substream">
+            <summary>
+              A duplex substream used by the <see cref="P:PeerTalk.Multiplex.Substream.Muxer"/>.
+            </summary>
+            <remarks>
+              Reading of data waits on the Muxer calling <see cref="M:PeerTalk.Multiplex.Substream.AddData(System.Byte[])"/>.
+              <see cref="M:PeerTalk.Multiplex.Substream.NoMoreData"/> is used to signal the end of stream.
+              <para>
+              Writing data is buffered until <see cref="M:PeerTalk.Multiplex.Substream.FlushAsync(System.Threading.CancellationToken)"/> is
+              called.
+              </para>
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Substream.SentMessageType">
+            <summary>
+              The type of message of sent to the other side.
+            </summary>
+            <value>
+              Either <see cref="F:PeerTalk.Multiplex.PacketType.MessageInitiator"/> or <see cref="F:PeerTalk.Multiplex.PacketType.MessageReceiver"/>.
+              Defaults to <see cref="F:PeerTalk.Multiplex.PacketType.MessageReceiver"/>.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Substream.Id">
+            <summary>
+              The stream identifier.
+            </summary>
+            <value>
+              The session initiator allocates odd IDs and the session receiver allocates even IDs.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Multiplex.Substream.Name">
+            <summary>
+              A name for the stream.
+            </summary>
+            <value>
+              Names do not need to be unique.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.Muxer">
+            <summary>
+              The multiplexor associated with the substream.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.CanRead">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.CanSeek">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.CanWrite">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.CanTimeout">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.Length">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Multiplex.Substream.Position">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.Seek(System.Int64,System.IO.SeekOrigin)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.SetLength(System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.AddData(System.Byte[])">
+            <summary>
+              Add some data that should be read by the stream.
+            </summary>
+            <param name="data">
+              The data to be read.
+            </param>
+            <remarks>
+              <b>AddData</b> is called when the muxer receives a packet for this
+              stream.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.NoMoreData">
+            <summary>
+              Indicates that the stream will not receive any more data.
+            </summary>
+            <seealso cref="M:PeerTalk.Multiplex.Substream.AddData(System.Byte[])"/>
+            <remarks>
+              <b>NoMoreData</b> is called when the muxer receives a packet to
+              close this stream.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.Read(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.Flush">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.FlushAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.Write(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.WriteByte(System.Byte)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Multiplex.Substream.Dispose(System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PeerConnection">
+            <summary>
+              A connection between two peers.
+            </summary>
+            <remarks>
+              A connection is used to exchange messages between peers.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.LocalPeer">
+            <summary>
+              The local peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.RemotePeer">
+            <summary>
+              The remote peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.LocalAddress">
+            <summary>
+              The local peer's end point.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.RemoteAddress">
+            <summary>
+              The remote peer's end point.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.LocalPeerKey">
+            <summary>
+              The private key of the local peer.
+            </summary>
+            <value>
+              Used to prove the identity of the <see cref="P:PeerTalk.PeerConnection.LocalPeer"/>.
+            </value>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.IsIncoming">
+            <summary>
+              Determine which peer (local or remote) initiated the connection.
+            </summary>
+            <value>
+              <b>true</b> if the <see cref="P:PeerTalk.PeerConnection.RemotePeer"/> initiated the connection;
+              otherwise, <b>false</b>.
+            </value>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.IsActive">
+            <summary>
+              Determines if the connection to the remote can be used.
+            </summary>
+            <value>
+              <b>true</b> if the connection is active.
+            </value>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.Stream">
+            <summary>
+              The duplex stream between the two peers.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.Protocols">
+            <summary>
+              The protocols that the connection will handle.
+            </summary>
+            <value>
+              The key is a protocol name, such as "/mplex/6.7.0".  The value
+              is a function that will process the protocol message.
+            </value>
+            <seealso cref="M:PeerTalk.PeerConnection.AddProtocol(PeerTalk.Protocols.IPeerProtocol)"/>
+            <seealso cref="M:PeerTalk.PeerConnection.AddProtocols(System.Collections.Generic.IEnumerable{PeerTalk.Protocols.IPeerProtocol})"/>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.AddProtocol(PeerTalk.Protocols.IPeerProtocol)">
+            <summary>
+              Add a protocol that the connection will handle.
+            </summary>
+            <param name="protocol">
+              A peer protocol to add.
+            </param>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.AddProtocols(System.Collections.Generic.IEnumerable{PeerTalk.Protocols.IPeerProtocol})">
+            <summary>
+              Add a seequence of protocols that the connection will handle.
+            </summary>
+            <param name="protocols">
+              The peer protocols to add.
+            </param>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.SecurityEstablished">
+            <summary>
+              Signals that the security for the connection is established.
+            </summary>
+            <remarks>
+              This can be awaited.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.MuxerEstablished">
+            <summary>
+              Signals that the muxer for the connection is established.
+            </summary>
+            <remarks>
+              This can be awaited.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.IdentityEstablished">
+            <summary>
+              Signals that the identity of the remote endpoint is established.
+            </summary>
+            <remarks>
+              This can be awaited.
+            </remarks>
+            <remarks>
+              The data in <see cref="P:PeerTalk.PeerConnection.RemotePeer"/> is not complete until
+              the identity is establish.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.LastUsed">
+            <summary>
+              When the connection was last used.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.BytesRead">
+            <summary>
+              Number of bytes read over the connection.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PeerConnection.BytesWritten">
+            <summary>
+              Number of bytes written over the connection.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.InitiateAsync(System.Collections.Generic.IEnumerable{PeerTalk.Protocols.IEncryptionProtocol},System.Threading.CancellationToken)">
+            <summary>
+             Establish the connection with the remote node.
+            </summary>
+            <param name="securityProtocols"></param>
+            <param name="cancel"></param>
+            <remarks>
+              This should be called when the local peer wants a connection with
+              the remote peer.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.EstablishProtocolAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+              TODO:
+            </summary>
+            <param name="name"></param>
+            <param name="cancel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.EstablishProtocolAsync(System.String,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              TODO:
+            </summary>
+            <param name="name"></param>
+            <param name="stream"></param>
+            <param name="cancel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.ReadMessages(System.Threading.CancellationToken)">
+            <summary>
+              Starts reading messages from the remote peer.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.ReadMessages(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Starts reading messages from the remote peer on the specified stream.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.PeerConnection.Closed">
+            <summary>
+              Signals that the connection is closed (disposed).
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.Dispose(System.Boolean)">
+            <summary>
+             TODO
+            </summary>
+            <param name="disposing"></param>
+        </member>
+        <member name="M:PeerTalk.PeerConnection.Dispose">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:PeerTalk.PeerManager">
+            <summary>
+              Manages the peers.
+            </summary>
+            <remarks>
+               Listens to the <see cref="P:PeerTalk.PeerManager.Swarm"/> events to determine the state
+               of a peer.
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.PeerManager.InitialBackoff">
+            <summary>
+              Initial time to wait before attempting a reconnection
+              to a dead peer.
+            </summary>
+            <value>
+              Defaults to 1 minute.
+            </value>
+        </member>
+        <member name="F:PeerTalk.PeerManager.MaxBackoff">
+            <summary>
+              When reached, the peer is considered permanently dead.
+            </summary>
+            <value>
+              Defaults to 64 minutes.
+            </value>
+        </member>
+        <member name="P:PeerTalk.PeerManager.Swarm">
+            <summary>
+              Provides access to other peers.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.PeerManager.DeadPeers">
+            <summary>
+              The peers that are reachable.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerManager.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PeerManager.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PeerManager.SetNotReachable(Ipfs.Peer)">
+            <summary>
+              Indicates that the peer can not be connected to.
+            </summary>
+            <param name="peer"></param>
+        </member>
+        <member name="M:PeerTalk.PeerManager.SetReachable(Ipfs.Peer)">
+            <summary>
+              Indicates that the peer can be connected to.
+            </summary>
+            <param name="peer"></param>
+        </member>
+        <member name="M:PeerTalk.PeerManager.Swarm_PeerNotReachable(System.Object,Ipfs.Peer)">
+            <summary>
+              Is invoked by the <see cref="P:PeerTalk.PeerManager.Swarm"/> when a peer can not be connected to.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerManager.Swarm_ConnectionEstablished(System.Object,PeerTalk.PeerConnection)">
+            <summary>
+              Is invoked by the <see cref="P:PeerTalk.PeerManager.Swarm"/> when a peer is connected to.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PeerManager.Phoenix">
+            <summary>
+              Background process to try reconnecting to a dead peer.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.DeadPeer">
+            <summary>
+              Information on a peer that is not reachable.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.DeadPeer.Peer">
+            <summary>
+              The peer that does not respond.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.DeadPeer.Backoff">
+            <summary>
+              How long to wait before attempting another connect.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.DeadPeer.NextAttempt">
+            <summary>
+              When another connect should be tried.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Policy`1">
+            <summary>
+              A base for defining a policy.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+        </member>
+        <member name="M:PeerTalk.Policy`1.IsAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Policy`1.IsNotAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PolicyAlways`1">
+            <summary>
+              A rule that always passes.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+        </member>
+        <member name="M:PeerTalk.PolicyAlways`1.IsAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PolicyNever`1">
+            <summary>
+              A rule that always fails.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+        </member>
+        <member name="M:PeerTalk.PolicyNever`1.IsAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.ProtoBufHelper">
+            <summary>
+              Helper methods for ProtoBuf.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.ProtoBufHelper.ReadMessageAsync``1(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Read a proto buf message with a varint length prefix.
+            </summary>
+            <typeparam name="T">
+              The type of message.
+            </typeparam>
+            <param name="stream">
+              The stream containing the message.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result is
+              the <typeparamref name="T"/> message.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Protocols.Identify1">
+            <summary>
+              Identifies the peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Protocols.Identify1.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Protocols.Identify1.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Identify1.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Identify1.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Identify1.GetRemotePeer(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <summary>
+              Gets the identity information of the remote peer.
+            </summary>
+            <param name="connection">
+              The currenty connection to the remote peer.
+            </param>
+            <param name="cancel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PeerTalk.Protocols.Identify1.UpdateRemotePeerAsync(Ipfs.Peer,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Read the identify message and update the peer information.
+            </summary>
+            <param name="remote"></param>
+            <param name="stream"></param>
+            <param name="cancel"></param>
+            <returns></returns>
+        </member>
+        <member name="T:PeerTalk.Protocols.IEncryptionProtocol">
+            <summary>
+              Applies encryption to a <see cref="T:PeerTalk.PeerConnection"/>.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Protocols.IEncryptionProtocol.EncryptAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <summary>
+              Creates an encrypted stream for the connection.
+            </summary>
+            <param name="connection">
+              A connection between two peers.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the encrypted stream.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Protocols.IPeerProtocol">
+            <summary>
+              Defines the messages that can be exchanged between two peers.
+            </summary>
+            <remarks>
+              <see cref="M:System.Object.ToString"/> must return a string in the form
+              "/name/version".
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Protocols.IPeerProtocol.Name">
+            <summary>
+              The name of the protocol.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Protocols.IPeerProtocol.Version">
+            <summary>
+              The version of the protocol.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Protocols.IPeerProtocol.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Process a message for the protocol.
+            </summary>
+            <param name="connection">
+              A connection between two peers.
+            </param>
+            <param name="stream">
+              The message source.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Protocols.Message">
+            <summary>
+              A message that is exchanged between peers.
+            </summary>
+            <remarks>
+              A message consists of
+              <list type="bullet">
+                 <item><description>A <see cref="T:Ipfs.Varint"/> length prefix</description></item>
+                 <item><description>The payload</description></item>
+                 <item><description>A terminating newline</description></item>
+              </list>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Protocols.Message.ReadBytesAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Read the message as a sequence of bytes from the <see cref="T:System.IO.Stream"/>.
+            </summary>
+            <param name="stream">
+              The <see cref="T:System.IO.Stream"/> to a peer.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the byte representation of the message's payload.
+            </returns>
+            <exception cref="T:System.IO.InvalidDataException">
+              When the message is invalid.
+            </exception>
+        </member>
+        <member name="M:PeerTalk.Protocols.Message.ReadStringAsync(System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Read the message as a <see cref="T:System.String"/> from the <see cref="T:System.IO.Stream"/>.
+            </summary>
+            <param name="stream">
+              The <see cref="T:System.IO.Stream"/> to a peer.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the string representation of the message's payload.
+            </returns>
+            <exception cref="T:System.IO.InvalidDataException">
+              When the message is invalid.
+            </exception>
+            <remarks>
+              The return value has the length prefix and terminating newline removed.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Protocols.Message.WriteAsync(System.String,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+              Writes the binary representation of the message to the specified <see cref="T:System.IO.Stream"/>.
+            </summary>
+            <param name="message">
+              The message to write.  A newline is automatically appended.
+            </param>
+            <param name="stream">
+              The <see cref="T:System.IO.Stream"/> to a peer.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.Protocols.Mplex67">
+            <summary>
+               A Stream Multiplexer protocol.
+            </summary>
+            <seealso href="https://github.com/libp2p/mplex"/>
+        </member>
+        <member name="P:PeerTalk.Protocols.Mplex67.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Protocols.Mplex67.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Mplex67.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Mplex67.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Mplex67.ProcessResponseAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Protocols.Multistream1">
+            <summary>
+              A protocol to select other protocols.
+            </summary>
+            <seealso href="https://github.com/multiformats/multistream-select"/>
+        </member>
+        <member name="P:PeerTalk.Protocols.Multistream1.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Protocols.Multistream1.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Multistream1.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Multistream1.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Protocols.Plaintext1">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Protocols.Plaintext1.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Protocols.Plaintext1.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Plaintext1.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Plaintext1.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.Plaintext1.EncryptAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Protocols.ProtocolRegistry">
+            <summary>
+              Metadata on <see cref="T:PeerTalk.Protocols.IPeerProtocol"/>.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Protocols.ProtocolRegistry.Protocols">
+            <summary>
+              All the peer protocols.
+            </summary>
+            <remarks>
+              The key is the name and version of the peer protocol, like "/multiselect/1.0.0".
+              The value is a Func that returns an new instance of the peer protocol.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Protocols.ProtocolRegistry.Register``1">
+            <summary>
+              Register a new protocol.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:PeerTalk.Protocols.ProtocolRegistry.Deregister(System.String)">
+            <summary>
+              Remove the specified protocol.
+            </summary>
+            <param name="protocolName">
+              The protocol name to remove.
+            </param>
+        </member>
+        <member name="T:PeerTalk.Protocols.VersionedName">
+            <summary>
+              A name with a semantic version.
+            </summary>
+            <remarks>
+              Implements value type equality.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Protocols.VersionedName.Name">
+            <summary>
+              The name.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Protocols.VersionedName.Version">
+            <summary>
+              The semantic version.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.Parse(System.String)">
+            <summary>
+              Parse
+            </summary>
+            <param name="s"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.Equals(PeerTalk.Protocols.VersionedName)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.op_Equality(PeerTalk.Protocols.VersionedName,PeerTalk.Protocols.VersionedName)">
+            <summary>
+              Value equality.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.op_Inequality(PeerTalk.Protocols.VersionedName,PeerTalk.Protocols.VersionedName)">
+            <summary>
+              Value inequality.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Protocols.VersionedName.CompareTo(PeerTalk.Protocols.VersionedName)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PubSub.FloodRouter">
+            <summary>
+              The original flood sub router.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PubSub.FloodRouter.RemoteTopics">
+            <summary>
+              The topics of interest of other peers.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.PubSub.FloodRouter.MessageReceived">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.FloodRouter.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.FloodRouter.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.ToString">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.FloodRouter.Swarm">
+            <summary>
+              Provides access to other peers.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.ProcessSubscription(PeerTalk.PubSub.Subscription,Ipfs.Peer)">
+            <summary>
+              Process a subscription request from another peer.
+            </summary>
+            <param name="sub">
+              The subscription request.
+            </param>
+            <param name="remote">
+              The remote <see cref="T:Ipfs.Peer"/>.
+            </param>
+            <seealso cref="P:PeerTalk.PubSub.FloodRouter.RemoteTopics"/>
+            <remarks>
+              Maintains the <see cref="P:PeerTalk.PubSub.FloodRouter.RemoteTopics"/>.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.InterestedPeers(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.JoinTopicAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.LeaveTopicAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.PublishAsync(PeerTalk.PubSub.PublishedMessage,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.Swarm_ConnectionEstablished(System.Object,PeerTalk.PeerConnection)">
+            <summary>
+              Raised when a connection is established to a remote peer.
+            </summary>
+            <param name="sender"></param>
+            <param name="connection"></param>
+            <remarks>
+              Sends the hello message to the remote peer.  The message contains
+              all topics that are of interest to the local peer.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.PubSub.FloodRouter.Swarm_PeerDisconnected(System.Object,Ipfs.Peer)">
+            <summary>
+              Raised when the peer has no more connections.
+            </summary>
+            <param name="sender"></param>
+            <param name="peer"></param>
+            <remarks>
+              Removes the <paramref name="peer"/> from the
+              <see cref="P:PeerTalk.PubSub.FloodRouter.RemoteTopics"/>.
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.PubSub.IMessageRouter">
+            <summary>
+              Routes pub/sub messages to other peers.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PubSub.IMessageRouter.PublishAsync(PeerTalk.PubSub.PublishedMessage,System.Threading.CancellationToken)">
+            <summary>
+              Sends the message to other peers.
+            </summary>
+            <param name="message">
+              The message to send.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="E:PeerTalk.PubSub.IMessageRouter.MessageReceived">
+            <summary>
+              Raised when a new message is received.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PubSub.IMessageRouter.InterestedPeers(System.String)">
+            <summary>
+              Gets the sequence of peers interested in the topic.
+            </summary>
+            <param name="topic">
+              The topic of interest or <b>null</b> for all topics.
+            </param>
+            <returns>
+              A sequence of <see cref="T:Ipfs.Peer"/> that are subsribed to the
+              <paramref name="topic"/>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.PubSub.IMessageRouter.JoinTopicAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+              Indicates that the local peer is interested in the topic.
+            </summary>
+            <param name="topic">
+              The topic of interested.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.PubSub.IMessageRouter.LeaveTopicAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+              Indicates that the local peer is no longer interested in the topic.
+            </summary>
+            <param name="topic">
+              The topic of interested.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="T:PeerTalk.PubSub.LoopbackRouter">
+            <summary>
+              A message router that always raises <see cref="E:PeerTalk.PubSub.LoopbackRouter.MessageReceived"/>
+              when a message is published.
+            </summary>
+            <remarks>
+              The allows the <see cref="T:PeerTalk.PubSub.NotificationService"/> to invoke the
+              local subscribtion handlers.
+            </remarks>
+        </member>
+        <member name="E:PeerTalk.PubSub.LoopbackRouter.MessageReceived">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.InterestedPeers(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.JoinTopicAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.LeaveTopicAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.PublishAsync(PeerTalk.PubSub.PublishedMessage,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.LoopbackRouter.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PubSub.NotificationService">
+            <summary>
+              A simple pub/sub messaging service that supports
+              multiple message routers.
+            </summary>
+            <remarks>
+              Relies upon the router(s) to deliver and receive messages from other peers.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PubSub.NotificationService.LocalPeer">
+            <summary>
+              The local peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PubSub.NotificationService.Routers">
+            <summary>
+              Sends and receives messages to other peers.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.PubSub.NotificationService.MesssagesPublished">
+            <summary>
+              The number of messages that have published.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.PubSub.NotificationService.MesssagesReceived">
+            <summary>
+              The number of messages that have been received.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.PubSub.NotificationService.DuplicateMesssagesReceived">
+            <summary>
+              The number of duplicate messages that have been received.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.CreateMessage(System.String,System.Byte[])">
+            <summary>
+              Creates a message for the topic and data.
+            </summary>
+            <param name="topic">
+              The topic name/id.
+            </param>
+            <param name="data">
+              The payload of message.
+            </param>
+            <returns>
+              A unique published message.
+            </returns>
+            <remarks>
+              The <see cref="P:PeerTalk.PubSub.PublishedMessage.SequenceNumber"/> is a monitonically 
+              increasing unsigned long.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.SubscribedTopicsAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.PeersAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.PublishAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.PublishAsync(System.String,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.PublishAsync(System.String,System.Byte[],System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.SubscribeAsync(System.String,System.Action{Ipfs.IPublishedMessage},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.PubSub.NotificationService.Router_MessageReceived(System.Object,PeerTalk.PubSub.PublishedMessage)">
+            <summary>
+              Invoked when a router gets a message.
+            </summary>
+            <param name="sender">
+              The <see cref="T:PeerTalk.PubSub.IMessageRouter"/>.
+            </param>
+            <param name="msg">
+              The message.
+            </param>
+            <remarks>
+              Invokes any topic handlers and publishes the messages on the other routers.
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.PubSub.PublishedMessage">
+            <summary>
+             A published messaged for a topic(s).
+            </summary>
+            <seealso ref="https://github.com/libp2p/specs/blob/master/pubsub/README.md"/>
+            <remarks>
+              TODO: Sender should really be called Author.
+              
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.Sender">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.Forwarder">
+            <summary>
+              Who sent the the message.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.Topics">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.SequenceNumber">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.DataBytes">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.DataStream">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.Id">
+            <summary>>
+              NOT SUPPORTED, use <see cref="P:PeerTalk.PubSub.PublishedMessage.MessageId"/>.
+            </summary>
+            <exception cref="T:System.NotSupportedException">
+              A published message does not have a content id.
+            </exception>
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.MessageId">
+            <summary>
+              A universally unique id for the message.
+            </summary>
+            <value>
+              The sender's ID concatenated with the <see cref="P:PeerTalk.PubSub.PublishedMessage.SequenceNumber"/>.
+            </value>
+        </member>
+        <member name="P:PeerTalk.PubSub.PublishedMessage.Size">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.PubSub.PubSubMessage">
+            <summary>
+              The PubSub message exchanged between peers.
+            </summary>
+            <seealso ref="https://github.com/libp2p/specs/blob/master/pubsub/README.md"/>
+        </member>
+        <member name="F:PeerTalk.PubSub.PubSubMessage.Subscriptions">
+            <summary>
+              Sequence of topic subscriptions of the sender.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.PubSub.PubSubMessage.PublishedMessages">
+            <summary>
+              Sequence of topic messages.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.PubSub.Subscription">
+            <summary>
+              A peer's subscription to a topic.
+            </summary>
+            <seealso ref="https://github.com/libp2p/specs/blob/master/pubsub/README.md"/>
+        </member>
+        <member name="F:PeerTalk.PubSub.Subscription.Subscribe">
+            <summary>
+              Determines if the topic is subscribed to.
+            </summary>
+            <value>
+              <b>true</b> if subscribing; otherwise, <b>false</b> if
+              unsubscribing.
+            </value>
+        </member>
+        <member name="F:PeerTalk.PubSub.Subscription.Topic">
+            <summary>
+              The topic name/id.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.PubSub.TopicManager">
+            <summary>
+              Maintains the sequence of peer's that are interested in a topic.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.GetPeers(System.String)">
+            <summary>
+              Get the peers interested in a topic.
+            </summary>
+            <param name="topic">
+              The topic of interest or <b>null</b> for all topics.
+            </param>
+            <returns>
+              A sequence of <see cref="T:Ipfs.Peer"/> that are interested
+              in the <paramref name="topic"/>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.GetTopics(Ipfs.Peer)">
+            <summary>
+              Gets the topics that a peer is interested in
+            </summary>
+            <param name="peer">
+              The <see cref="T:Ipfs.Peer"/>.
+            </param>
+            <returns>
+              A sequence of topics that the <paramref name="peer"/> is
+              interested in.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.AddInterest(System.String,Ipfs.Peer)">
+            <summary>
+              Indicate that the <see cref="T:Ipfs.Peer"/> is interested in the
+              topic.
+            </summary>
+            <param name="topic">
+              The topic of interest.
+            </param>
+            <param name="peer">
+              A <see cref="T:Ipfs.Peer"/>
+            </param>
+            <remarks>
+              Duplicates are ignored.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.RemoveInterest(System.String,Ipfs.Peer)">
+            <summary>
+              Indicate that the <see cref="T:Ipfs.Peer"/> is not interested in the
+              topic.
+            </summary>
+            <param name="topic">
+              The topic of interest.
+            </param>
+            <param name="peer">
+              A <see cref="T:Ipfs.Peer"/>
+            </param>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.Clear(Ipfs.Peer)">
+            <summary>
+              Indicates that the peer is not interested in anything. 
+            </summary>
+            <param name="peer">
+              The <see cref="T:Ipfs.Peer"/>.s
+            </param>
+        </member>
+        <member name="M:PeerTalk.PubSub.TopicManager.Clear">
+            <summary>
+              Remove all topics.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.ContentRouter">
+            <summary>
+              Manages a list of content that is provided by multiple peers.
+            </summary>
+            <remarks>
+              A peer is expected to provide content for at least <see cref="P:PeerTalk.Routing.ContentRouter.ProviderTTL"/>.
+              After this expires the provider is removed from the list.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Routing.ContentRouter.ProviderInfo.Expiry">
+            <summary>
+              When the provider entry expires.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.ContentRouter.ProviderInfo.PeerId">
+            <summary>
+              The peer ID of the provider.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.ContentRouter.ProviderTTL">
+            <summary>
+              How long a provider is assumed to provide some content.
+            </summary>
+            <value>
+              Defaults to 24 hours (1 day).
+            </value>
+        </member>
+        <member name="M:PeerTalk.Routing.ContentRouter.Add(Ipfs.Cid,Ipfs.MultiHash)">
+            <summary>
+               Adds the <see cref="T:Ipfs.Cid"/> and <see cref="T:Ipfs.Peer"/> to the content routing system.
+            </summary>
+            <param name="cid">
+              The ID of some content that the <paramref name="provider"/> contains.
+            </param>
+            <param name="provider">
+              The peer ID that contains the <paramref name="cid"/>.
+            </param>
+        </member>
+        <member name="M:PeerTalk.Routing.ContentRouter.Add(Ipfs.Cid,Ipfs.MultiHash,System.DateTime)">
+            <summary>
+              Adds the <see cref="T:Ipfs.Cid"/> and <see cref="T:Ipfs.Peer"/> to the content 
+              routing system at the specified <see cref="T:System.DateTime"/>.
+            </summary>
+            <param name="cid">
+              The ID of some content that the <paramref name="provider"/> contains.
+            </param>
+            <param name="provider">
+              The peer ID that contains the <paramref name="cid"/>.
+            </param>
+            <param name="now">
+              The local time that the <paramref name="provider"/> started to provide
+              the <paramref name="cid"/>.
+            </param>
+        </member>
+        <member name="M:PeerTalk.Routing.ContentRouter.Get(Ipfs.Cid)">
+            <summary>
+              Gets the providers for the <see cref="T:Ipfs.Cid"/>.
+            </summary>
+            <param name="cid">
+              The ID of some content.
+            </param>
+            <returns>
+              A sequence of peer IDs (providers) that contain the <paramref name="cid"/>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Routing.ContentRouter.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Routing.Dht1">
+            <summary>
+              DHT Protocol version 1.0
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.Dht1.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Routing.Dht1.Version">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.Routing.Dht1.Swarm">
+            <summary>
+              Provides access to other peers.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.Dht1.RoutingTable">
+            <summary>
+             Routing information on peers.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.Dht1.ContentRouter">
+            <summary>
+              Peers that can provide some content.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.Dht1.CloserPeerCount">
+            <summary>
+              The number of closer peers to return.
+            </summary>
+            <value>
+              Defaults to 20.
+            </value>
+        </member>
+        <member name="E:PeerTalk.Routing.Dht1.Stopped">
+            <summary>
+              Raised when the DHT is stopped.
+            </summary>
+            <seealso cref="M:PeerTalk.Routing.Dht1.StopAsync"/>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.Swarm_PeerDiscovered(System.Object,Ipfs.Peer)">
+            <summary>
+              The swarm has discovered a new peer, update the routing table.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.Swarm_PeerRemoved(System.Object,Ipfs.Peer)">
+            <summary>
+              The swarm has removed a peer, update the routing table.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.FindPeerAsync(Ipfs.MultiHash,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProvideAsync(Ipfs.Cid,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.FindProvidersAsync(Ipfs.Cid,System.Int32,System.Action{Ipfs.Peer},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.Advertise(Ipfs.Cid)">
+            <summary>
+              Advertise that we can provide the CID to the X closest peers
+              of the CID.
+            </summary>
+            <param name="cid">
+              The CID to advertise.
+            </param>
+            <remarks>
+              This starts a background process to send the AddProvider message
+              to the 4 closest peers to the <paramref name="cid"/>.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProcessPing(PeerTalk.Routing.DhtMessage,PeerTalk.Routing.DhtMessage)">
+            <summary>
+              Process a ping request.
+            </summary>
+            <remarks>
+              Simply return the <paramref name="request"/>.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProcessFindNode(PeerTalk.Routing.DhtMessage,PeerTalk.Routing.DhtMessage)">
+            <summary>
+              Process a find node request.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProcessGetProviders(PeerTalk.Routing.DhtMessage,PeerTalk.Routing.DhtMessage)">
+            <summary>
+              Process a get provider request.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.Dht1.ProcessAddProvider(Ipfs.Peer,PeerTalk.Routing.DhtMessage,PeerTalk.Routing.DhtMessage)">
+            <summary>
+              Process an add provider request.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.DhtRecordMessage">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtRecordMessage.Key">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtRecordMessage.Value">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtRecordMessage.Author">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtRecordMessage.Signature">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtRecordMessage.TimeReceived">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.MessageType">
+            <summary>
+              The type of DHT/KAD message.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.PutValue">
+            <summary>
+              Put a value.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.GetValue">
+            <summary>
+              Get a value.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.AddProvider">
+            <summary>
+              Indicate that a peer can provide something.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.GetProviders">
+            <summary>
+              Get the providers for something.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.FindNode">
+            <summary>
+              Find a peer.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.MessageType.Ping">
+            <summary>
+              NYI
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.ConnectionType">
+            <summary>
+              The connection status.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.ConnectionType.NotConnected">
+            <summary>
+            Sender does not have a connection to peer, and no extra information (default)
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.ConnectionType.Connected">
+            <summary>
+            Sender has a live connection to peer
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.ConnectionType.CanConnect">
+            <summary>
+            Sender recently connected to peer
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.ConnectionType.CannotConnect">
+            <summary>
+            Sender recently tried to connect to peer repeatedly but failed to connect
+            ("try" here is loose, but this should signal "made strong effort, failed")
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.DhtPeerMessage">
+            <summary>
+              Information about a peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtPeerMessage.Id">
+            <summary>
+            ID of a given peer. 
+            </summary>
+            <value>
+              The <see cref="T:Ipfs.MultiHash"/> as a byte array,
+            </value>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtPeerMessage.Addresses">
+            <summary>
+            Addresses for a given peer
+            </summary>
+            <value>
+              A sequence of <see cref="T:Ipfs.MultiAddress"/> as a byte array.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtPeerMessage.Connection">
+            <summary>
+            used to signal the sender's connection capabilities to the peer
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.DhtPeerMessage.TryToPeer(Ipfs.Peer@)">
+            <summary>
+              Convert the message into a <see cref="T:Ipfs.Peer"/>.
+            </summary>
+            <param name="peer"></param>
+            <returns></returns>
+        </member>
+        <member name="T:PeerTalk.Routing.DhtMessage">
+            <summary>
+              The DHT message exchanged between peers.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.Type">
+            <summary>
+            What type of message it is.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.ClusterLevelRaw">
+            <summary>
+              Coral cluster level.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.Key">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.Record">
+            <summary>
+              TODO
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.CloserPeers">
+            <summary>
+              The closer peers for a query.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DhtMessage.ProviderPeers">
+            <summary>
+             The providers for a query.
+            </summary>
+        </member>
+        <member name="T:PeerTalk.Routing.DistributedQuery`1">
+            <summary>
+              A query that is sent to multiple peers.
+            </summary>
+            <typeparam name="T">
+             The type of answer returned by a peer.
+            </typeparam>
+        </member>
+        <member name="F:PeerTalk.Routing.DistributedQuery`1.askCount">
+            <summary>
+              The maximum number of peers that can be queried at one time
+              for all distributed queries.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.DistributedQuery`1.askTime">
+            <summary>
+              The maximum time spent on waiting for an answer from a peer.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Routing.DistributedQuery`1.runningQuery">
+            <summary>
+              Controls the running of the distributed query.
+            </summary>
+            <remarks>
+              Becomes cancelled when the correct number of answers are found
+              or the caller of <see cref="M:PeerTalk.Routing.DistributedQuery`1.RunAsync(System.Threading.CancellationToken)"/> wants to cancel
+              or the DHT is stopped.
+            </remarks>
+        </member>
+        <member name="E:PeerTalk.Routing.DistributedQuery`1.AnswerObtained">
+            <summary>
+              Raised when an answer is obtained.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.Id">
+            <summary>
+              The unique identifier of the query.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.Answers">
+            <summary>
+              The received answers for the query.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.AnswersNeeded">
+            <summary>
+              The number of answers needed.
+            </summary>
+            <remarks>
+              When the numbers <see cref="P:PeerTalk.Routing.DistributedQuery`1.Answers"/> reaches this limit
+              the <see cref="M:PeerTalk.Routing.DistributedQuery`1.RunAsync(System.Threading.CancellationToken)">running query</see> will stop.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.ConcurrencyLevel">
+            <summary>
+              The maximum number of concurrent peer queries to perform
+              for one distributed query.
+            </summary>
+            <value>
+              The default is 16.
+            </value>
+            <remarks>
+              The number of peers that are asked for the answer.
+            </remarks>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.Dht">
+            <summary>
+              The distributed hash table.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.QueryType">
+            <summary>
+              The type of query to perform.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Routing.DistributedQuery`1.QueryKey">
+            <summary>
+              The key to find.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.DistributedQuery`1.RunAsync(System.Threading.CancellationToken)">
+            <summary>
+              Starts the distributed query.
+            </summary>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Routing.DistributedQuery`1.AskAsync(System.Int32)">
+            <summary>
+              Ask the next peer the question.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.DistributedQuery`1.AddAnswer(`0)">
+            <summary>
+              Add a answer to the query.
+            </summary>
+            <param name="answer">
+              An answer.
+            </param>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.Routing.RoutingTable">
+            <summary>
+              A wrapper around k-bucket, to provide easy store and retrival for peers.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.#ctor(Ipfs.Peer)">
+            <summary>
+              Creates a new instance of the <see cref="T:PeerTalk.Routing.RoutingTable"/> for
+              the specified <see cref="T:Ipfs.Peer"/>.
+            </summary>
+            <param name="localPeer"></param>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.Peers_Ping(System.Object,Makaretu.Collections.PingEventArgs{PeerTalk.Routing.RoutingPeer})">
+            <summary>
+              A k-bucket is full!
+            </summary>
+            <remarks>
+             Currently this just removes the oldest contact from the list, 
+             without acutally pinging the individual peers.
+            
+             This is the same as go does, but should probably
+             be upgraded to actually ping the individual peers.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.Add(Ipfs.Peer)">
+            <summary>
+              Add some information about the peer.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.Remove(Ipfs.Peer)">
+            <summary>
+              Remove the information about the peer.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.Contains(Ipfs.Peer)">
+            <summary>
+              Determines in the peer exists in the routing table.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.NearestPeers(Ipfs.MultiHash)">
+            <summary>
+              Find the closest peers to the peer ID.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Routing.RoutingTable.Key(Ipfs.MultiHash)">
+            <summary>
+              Converts the peer ID to a routing table key.
+            </summary>
+            <param name="id">A multihash</param>
+            <returns>
+              The routing table key.
+            </returns>
+            <remarks>
+              The peer ID is actually a multihash, it always starts with the same characters 
+              (ie, Qm for rsa). This causes the distribution of hashes to be 
+              non-equally distributed across all possible hash buckets. So the re-hash 
+              into a non-multihash is to evenly distribute the potential keys and 
+              hash buckets.
+            </remarks>
+            <seealso href="https://github.com/libp2p/js-libp2p-kad-dht/issues/56#issuecomment-441378802"/>
+        </member>
+        <member name="T:PeerTalk.SecureCommunication.Psk1Protector">
+            <summary>
+              Provides access to a private network of peers that
+              uses a <see cref="T:PeerTalk.Cryptography.PreSharedKey"/>.
+            </summary>
+            <remarks>
+              The <see cref="T:PeerTalk.Swarm"/> calls the network protector whenever a connection
+              is being established with another peer.
+            </remarks>
+            <seealso href="https://github.com/libp2p/specs/blob/master/pnet/Private-Networks-PSK-V1.md"/>
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Protector.Key">
+            <summary>
+              The key of the private network.
+            </summary>
+            <value>
+              Only peers with this key can be communicated with.
+            </value>
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Protector.ProtectAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.SecureCommunication.Psk1Stream">
+            <summary>
+              A duplex stream that is encrypted with a <see cref="T:PeerTalk.Cryptography.PreSharedKey"/>.
+            </summary>
+            <remarks>
+              The XSalsa20 cipher is used to encrypt the data.
+            </remarks>
+            <seealso href="https://github.com/libp2p/specs/blob/master/pnet/Private-Networks-PSK-V1.md"/>
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.#ctor(System.IO.Stream,PeerTalk.Cryptography.PreSharedKey)">
+            <summary>
+              Creates a new instance of the <see cref="T:PeerTalk.SecureCommunication.Psk1Stream"/> class. 
+            </summary>
+            <param name="stream">
+              The source/destination of the unprotected stream.
+            </param>
+            <param name="key">
+              The pre-shared 256-bit key for the private network of peers.
+            </param>
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.CanRead">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.CanSeek">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.CanWrite">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.CanTimeout">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.Length">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Psk1Stream.Position">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.Seek(System.Int64,System.IO.SeekOrigin)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.SetLength(System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.Read(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.Flush">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.FlushAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.Write(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.WriteByte(System.Byte)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Psk1Stream.Dispose(System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.SecureCommunication.Secio1">
+            <summary>
+              Creates a secure connection with a peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1.Version">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1.ToString">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1.ProcessMessageAsync(PeerTalk.PeerConnection,System.IO.Stream,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1.EncryptAsync(PeerTalk.PeerConnection,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.SecureCommunication.Secio1Stream">
+            <summary>
+              A duplex stream that is encrypted and signed.
+            </summary>
+            <remarks>
+              A packet consists of a [uint32 length of packet | encrypted body | hmac signature of encrypted body].
+              <para>
+              Writing data is buffered until <see cref="M:PeerTalk.SecureCommunication.Secio1Stream.FlushAsync(System.Threading.CancellationToken)"/> is
+              called.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.#ctor(System.IO.Stream,System.String,System.String,PeerTalk.Cryptography.StretchedKey,PeerTalk.Cryptography.StretchedKey)">
+            <summary>
+              Creates a new instance of the <see cref="T:PeerTalk.SecureCommunication.Secio1Stream"/> class. 
+            </summary>
+            <param name="stream">
+              The source/destination of SECIO packets.
+            </param>
+            <param name="cipherName">
+              The cipher for the <paramref name="stream"/>, such as AES-256 or AES-128.
+            </param>
+            <param name="hashName">
+              The hash for the <paramref name="stream"/>, such as SHA256.
+            </param>
+            <param name="localKey">
+              The keys used by the local endpoint.
+            </param>
+            <param name="remoteKey">
+              The keys used by the remote endpoint.
+            </param>
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.CanRead">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.CanSeek">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.CanWrite">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.CanTimeout">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.Length">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.SecureCommunication.Secio1Stream.Position">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.Seek(System.Int64,System.IO.SeekOrigin)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.SetLength(System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.Read(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.ReadPacketAsync(System.Threading.CancellationToken)">
+            <summary>
+              Read an encrypted and signed packet.
+            </summary>
+            <returns>
+              The plain text as an array of bytes.
+            </returns>
+            <remarks>
+              A packet consists of a [uint32 length of packet | encrypted body | hmac signature of encrypted body].
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.Flush">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.FlushAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.Write(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.WriteByte(System.Byte)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.SecureCommunication.Secio1Stream.Dispose(System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.StatsStream">
+            <summary>
+              A simple wrapper around another stream that records statistics.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.StatsStream.AllBandwidth">
+            <summary>
+              A summary of all StatStreams.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.StatsStream.#ctor(System.IO.Stream)">
+            <summary>
+              Create a <see cref="T:PeerTalk.StatsStream"/> for the specified stream.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.StatsStream.BytesRead">
+            <summary>
+              Total number of bytes read on the stream.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.StatsStream.BytesWritten">
+            <summary>
+              Total number of byte written to the stream.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.StatsStream.LastUsed">
+            <summary>
+              The last time a write or read occured.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.StatsStream.CanRead">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.CanSeek">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.CanWrite">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.Length">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.CanTimeout">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.ReadTimeout">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.Position">
+            <inheritdoc />
+        </member>
+        <member name="P:PeerTalk.StatsStream.WriteTimeout">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.Flush">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.Read(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.Seek(System.Int64,System.IO.SeekOrigin)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.SetLength(System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.Write(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.Dispose(System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.FlushAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.ReadByte">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.StatsStream.WriteByte(System.Byte)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Swarm">
+            <summary>
+              Manages communication with other peers.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Swarm.TransportConnectionTimeout">
+            <summary>
+              The time to wait for a low level connection to be established.
+            </summary>
+            <value>
+              Defaults to 30 seconds.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Swarm.protocols">
+            <summary>
+             The supported protocols.
+            </summary>
+            <remarks>
+              Use sychronized access, e.g. <code>lock (protocols) { ... }</code>.
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.Swarm.plaintext1">
+            <summary>
+              Added to connection protocols when needed.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Swarm.ListenerEstablished">
+            <summary>
+              Raised when a listener is establihed.
+            </summary>
+            <remarks>
+              Raised when <see cref="M:PeerTalk.Swarm.StartListeningAsync(Ipfs.MultiAddress)"/>
+              succeeds.
+            </remarks>
+        </member>
+        <member name="E:PeerTalk.Swarm.ConnectionEstablished">
+            <summary>
+              Raised when a connection to another peer is established.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Swarm.PeerDiscovered">
+            <summary>
+              Raised when a new peer is discovered for the first time.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Swarm.PeerDisconnected">
+            <summary>
+              Raised when a peer's connection is closed.
+            </summary>
+        </member>
+        <member name="E:PeerTalk.Swarm.PeerRemoved">
+            <summary>
+              Raised when a peer should no longer be used.
+            </summary>
+            <remarks>
+              This event indicates that the peer has been removed
+              from the <see cref="P:PeerTalk.Swarm.KnownPeers"/> and should no longer
+              be used.
+            </remarks>
+        </member>
+        <member name="E:PeerTalk.Swarm.PeerNotReachable">
+            <summary>
+              Raised when a peer cannot be connected to.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.LocalPeer">
+            <summary>
+             The local peer.
+            </summary>
+            <value>
+              The local peer must have an <see cref="P:Ipfs.Peer.Id"/> and
+              <see cref="P:Ipfs.Peer.PublicKey"/>.
+            </value>
+        </member>
+        <member name="P:PeerTalk.Swarm.LocalPeerKey">
+            <summary>
+              The private key of the local peer.
+            </summary>
+            <value>
+              Used to prove the identity of the <see cref="P:PeerTalk.Swarm.LocalPeer"/>.
+            </value>
+        </member>
+        <member name="F:PeerTalk.Swarm.otherPeers">
+            <summary>
+              Other nodes. Key is the bae58 hash of the peer ID.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Swarm.swarmCancellation">
+            <summary>
+              Used to cancel any task when the swarm is stopped.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Swarm.pendingConnections">
+            <summary>
+             Outstanding connection tasks initiated by the local peer.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Swarm.pendingRemoteConnections">
+            <summary>
+             Outstanding connection tasks initiated by a remote peer.
+            </summary>
+        </member>
+        <member name="F:PeerTalk.Swarm.Manager">
+            <summary>
+              Manages the swarm's peer connections.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.Router">
+            <summary>
+              Use to find addresses of a peer.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.NetworkProtector">
+            <summary>
+              Provides access to a private network of peers.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.IsRunning">
+            <summary>
+              Determines if the swarm has been started.
+            </summary>
+            <value>
+              <b>true</b> if the swarm has started; otherwise, <b>false</b>.
+            </value>
+            <seealso cref="M:PeerTalk.Swarm.StartAsync"/>
+            <seealso cref="M:PeerTalk.Swarm.StopAsync"/>
+        </member>
+        <member name="F:PeerTalk.Swarm.listeners">
+            <summary>
+              Cancellation tokens for the listeners.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.KnownPeerAddresses">
+            <summary>
+              Get the sequence of all known peer addresses.
+            </summary>
+            <value>
+              Contains any peer address that has been
+              <see cref="M:PeerTalk.Swarm.RegisterPeerAddress(Ipfs.MultiAddress)">discovered</see>.
+            </value>
+            <seealso cref="M:PeerTalk.Swarm.RegisterPeerAddress(Ipfs.MultiAddress)"/>
+        </member>
+        <member name="P:PeerTalk.Swarm.KnownPeers">
+            <summary>
+              Get the sequence of all known peers.
+            </summary>
+            <value>
+              Contains any peer that has been
+              <see cref="M:PeerTalk.Swarm.RegisterPeerAddress(Ipfs.MultiAddress)">discovered</see>.
+            </value>
+            <seealso cref="M:PeerTalk.Swarm.RegisterPeerAddress(Ipfs.MultiAddress)"/>
+        </member>
+        <member name="M:PeerTalk.Swarm.RegisterPeerAddress(Ipfs.MultiAddress)">
+            <summary>
+              Register that a peer's address has been discovered.
+            </summary>
+            <param name="address">
+              An address to the peer. It must end with the peer ID.
+            </param>
+            <returns>
+              The <see cref="T:Ipfs.Peer"/> that is registered.
+            </returns>
+            <exception cref="T:System.Exception">
+              The <see cref="P:PeerTalk.Swarm.BlackList"/> or <see cref="P:PeerTalk.Swarm.WhiteList"/> policies forbid it.
+              Or the "p2p/ipfs" protocol name is missing.
+            </exception>
+            <remarks>
+              If the <paramref name="address"/> is not already known, then it is
+              added to the <see cref="P:PeerTalk.Swarm.KnownPeerAddresses"/>.
+            </remarks>
+            <seealso cref="M:PeerTalk.Swarm.RegisterPeer(Ipfs.Peer)"/>
+        </member>
+        <member name="M:PeerTalk.Swarm.RegisterPeer(Ipfs.Peer)">
+            <summary>
+              Register that a peer has been discovered.
+            </summary>
+            <param name="peer">
+              The newly discovered peer.
+            </param>
+            <returns>
+              The registered peer.
+            </returns>
+            <remarks>
+              If the peer already exists, then the existing peer is updated with supplied
+              information and is then returned.  Otherwise, the <paramref name="peer"/>
+              is added to known peers and is returned.
+              <para>
+              If the peer already exists, then a union of the existing and new addresses
+              is used.  For all other information the <paramref name="peer"/>'s information
+              is used if not <b>null</b>.
+              </para>
+              <para>
+              If peer does not already exist, then the <see cref="E:PeerTalk.Swarm.PeerDiscovered"/> event
+              is raised.
+              </para>
+            </remarks>
+            <exception cref="T:System.Exception">
+              The <see cref="P:PeerTalk.Swarm.BlackList"/> or <see cref="P:PeerTalk.Swarm.WhiteList"/> policies forbid it.
+            </exception>
+        </member>
+        <member name="M:PeerTalk.Swarm.DeregisterPeer(Ipfs.Peer)">
+            <summary>
+              Deregister a peer.
+            </summary>
+            <param name="peer">
+              The peer to remove..
+            </param>
+            <remarks>
+              Remove all knowledge of the peer. The <see cref="E:PeerTalk.Swarm.PeerRemoved"/> event
+              is raised.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.HasPendingConnection(Ipfs.Peer)">
+            <summary>
+              Determines if a connection is being made to the peer.
+            </summary>
+            <param name="peer">
+              A <see cref="T:Ipfs.Peer"/>.
+            </param>
+            <returns>
+              <b>true</b> is the <paramref name="peer"/> has a pending connection.
+            </returns>
+        </member>
+        <member name="P:PeerTalk.Swarm.BlackList">
+            <summary>
+              The addresses that cannot be used.
+            </summary>
+        </member>
+        <member name="P:PeerTalk.Swarm.WhiteList">
+            <summary>
+              The addresses that can be used.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Swarm.StartAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Swarm.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Swarm.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <summary>
+              Connect to a peer using the specified <see cref="T:Ipfs.MultiAddress"/>.
+            </summary>
+            <param name="address">
+              An ipfs <see cref="T:Ipfs.MultiAddress"/>, such as
+             <c>/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ</c>.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the <see cref="T:PeerTalk.PeerConnection"/>.
+            </returns>
+            <remarks>
+              If already connected to the peer and is active on any address, then
+              the existing connection is returned.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.ConnectAsync(Ipfs.Peer,System.Threading.CancellationToken)">
+            <summary>
+              Connect to a peer.
+            </summary>
+            <param name="peer">
+             A peer to connect to.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the <see cref="T:PeerTalk.PeerConnection"/>.
+            </returns>
+            <remarks>
+              If already connected to the peer and is active on any address, then
+              the existing connection is returned.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.DialAsync(Ipfs.Peer,System.String,System.Threading.CancellationToken)">
+            <summary>
+              Create a stream to the peer that talks the specified protocol.
+            </summary>
+            <param name="peer">
+              The remote peer.
+            </param>
+            <param name="protocol">
+              The protocol name, such as "/foo/0.42.0".
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is the new <see cref="T:System.IO.Stream"/> to the <paramref name="peer"/>.
+            </returns>
+            <remarks>
+              <para>
+              When finished, the caller must <see cref="M:System.IO.Stream.Dispose"/> the
+              new stream.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.Dial(Ipfs.Peer,System.Collections.Generic.IEnumerable{Ipfs.MultiAddress},System.Threading.CancellationToken)">
+            <summary>
+              Establish a duplex stream between the local and remote peer.
+            </summary>
+            <param name="remote"></param>
+            <param name="addrs"></param>
+            <param name="cancel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PeerTalk.Swarm.DisconnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <summary>
+              Disconnect from a peer.
+            </summary>
+            <param name="address">
+              An ipfs <see cref="T:Ipfs.MultiAddress"/>, such as
+             <c>/ip4/104.131.131.82/tcp/4001/ipfs/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ</c>.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+            <remarks>
+              If the peer is not conected, then nothing happens.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.StartListeningAsync(Ipfs.MultiAddress)">
+            <summary>
+              Start listening on the specified <see cref="T:Ipfs.MultiAddress"/>.
+            </summary>
+            <param name="address">
+              Typically "/ip4/0.0.0.0/tcp/4001" or "/ip6/::/tcp/4001".
+            </param>
+            <returns>
+              A task that represents the asynchronous operation.  The task's result
+              is a <see cref="T:Ipfs.MultiAddress"/> than can be used by another peer
+              to connect to tis peer.
+            </returns>
+            <exception cref="T:System.Exception">
+              Already listening on <paramref name="address"/>.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+              <paramref name="address"/> is missing a transport protocol (such as tcp or udp).
+            </exception>
+            <remarks>
+              Allows other peers to <see cref="M:PeerTalk.Swarm.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">connect</see>
+              to the <paramref name="address"/>.
+              <para>
+              The <see cref="P:Ipfs.Peer.Addresses"/> of the <see cref="P:PeerTalk.Swarm.LocalPeer"/> are updated.  If the <paramref name="address"/> refers to
+              any IP address ("/ip4/0.0.0.0" or "/ip6/::") then all network interfaces addresses
+              are added.  If the port is zero (as in "/ip6/::/tcp/0"), then the peer addresses contains the actual port number
+              that was assigned.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.OnRemoteConnect(System.IO.Stream,Ipfs.MultiAddress,Ipfs.MultiAddress)">
+            <summary>
+              Called when a remote peer is connecting to the local peer.
+            </summary>
+            <param name="stream">
+              The stream to the remote peer.
+            </param>
+            <param name="local">
+              The local peer's address.
+            </param>
+            <param name="remote">
+              The remote peer's address.
+            </param>
+            <remarks>
+              Establishes the protocols of the connection.  Any exception is simply
+              logged as warning.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.AddProtocol(PeerTalk.Protocols.IPeerProtocol)">
+            <summary>
+              Add a protocol that is supported by the swarm.
+            </summary>
+            <param name="protocol">
+              The protocol to add.
+            </param>
+        </member>
+        <member name="M:PeerTalk.Swarm.RemoveProtocol(PeerTalk.Protocols.IPeerProtocol)">
+            <summary>
+              Remove a protocol from the swarm.
+            </summary>
+            <param name="protocol">
+              The protocol to remove.
+            </param>
+        </member>
+        <member name="M:PeerTalk.Swarm.StopListeningAsync(Ipfs.MultiAddress)">
+            <summary>
+              Stop listening on the specified <see cref="T:Ipfs.MultiAddress"/>.
+            </summary>
+            <param name="address"></param>
+            <returns>
+              A task that represents the asynchronous operation.
+            </returns>
+            <remarks>
+              Allows other peers to <see cref="M:PeerTalk.Swarm.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">connect</see>
+              to the <paramref name="address"/>.
+              <para>
+              The addresses of the <see cref="P:PeerTalk.Swarm.LocalPeer"/> are updated.
+              </para>
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.Swarm.IsAllowed(Ipfs.MultiAddress)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Swarm.IsAllowed(Ipfs.Peer)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.TaskHelper">
+            <summary>
+              Some helpers for tasks.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.TaskHelper.WhenAnyResult``1(System.Collections.Generic.IEnumerable{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+              Gets the first result from a set of tasks.
+            </summary>
+            <typeparam name="T">
+              The result type of the <paramref name="tasks"/>.
+            </typeparam>
+            <param name="tasks">
+              The tasks to perform.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, the <see cref="T:System.Threading.Tasks.TaskCanceledException"/> is raised.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result is
+              a <typeparamref name="T"/>>.
+            </returns>
+            <remarks>
+              Returns the result of the first task that is not
+              faulted or canceled.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.TaskHelper.ParallelForEachAsync``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,System.Threading.Tasks.Task},System.Int32)">
+            <summary>
+              Run async tasks in parallel,
+            </summary>
+            <param name="source">
+              A sequence of some data.
+            </param>
+            <param name="funcBody">
+              The async code to perform.
+            </param>
+            <param name="maxDoP">
+              The number of partitions to create.
+            </param>
+            <returns>
+              A Task to await.
+            </returns>
+            <remarks>
+              Copied from https://houseofcat.io/tutorials/csharp/async/parallelforeachasync
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.Transports.IPeerTransport">
+            <summary>
+              Establishes a duplex stream between two peers
+              over a specific network transport.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Transports.IPeerTransport.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <summary>
+              Connect to a peer.
+            </summary>
+            <param name="address">
+              The address of the peer.
+            </param>
+            <param name="cancel">
+              Is used to stop the task.  When cancelled, a <b>null</b> is returned.
+            </param>
+            <returns>
+              A task that represents the asynchronous operation. The task's result
+              is a duplex <see cref="T:System.IO.Stream"/> or <b>null</b>.
+            </returns>
+        </member>
+        <member name="M:PeerTalk.Transports.IPeerTransport.Listen(Ipfs.MultiAddress,System.Action{System.IO.Stream,Ipfs.MultiAddress,Ipfs.MultiAddress},System.Threading.CancellationToken)">
+            <summary>
+              Listen to any peer connections on the specified address.
+            </summary>
+            <param name="address">
+              The address to listen on.
+            </param>
+            <param name="handler">
+              The action to perform when a peer connection is received.
+            </param>
+            <param name="cancel">
+              Is used to stop the connection listener.  When cancelled, the <see cref="T:System.OperationCanceledException"/>
+              is <b>NOT</b> raised.
+            </param>
+            <returns>
+              The actual address of the listener.
+            </returns>
+            <remarks>
+              The <paramref name="handler"/> is invoked on the peer listener thread. If
+              it throws, then the connection is closed but the listener remains
+              active.  It is passed a duplex stream, the local address and the remote
+              address.
+              <para>
+              To stop listening, the <paramref name="cancel"/> parameter 
+              must be supplied and then use the <see cref="M:System.Threading.CancellationTokenSource.Cancel"/>
+              method.
+              </para>
+              <para>
+              For socket based transports (tcp or upd), if the port is not defined 
+              or is zero an ephermal port is assigned.
+              </para>
+            </remarks>
+        </member>
+        <member name="T:PeerTalk.Transports.Tcp">
+            <summary>
+              Establishes a duplex stream between two peers
+              over TCP.
+            </summary>
+            <remarks>
+              <see cref="M:PeerTalk.Transports.Tcp.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)"/> determines the network latency and sets the timeout
+              to 3 times the latency or <see cref="F:PeerTalk.Transports.Tcp.MinReadTimeout"/>.
+            </remarks>
+        </member>
+        <member name="F:PeerTalk.Transports.Tcp.MinReadTimeout">
+            <summary>
+             The minimum read timeout.
+            </summary>
+            <value>
+              Defaults to 3 seconds.
+            </value>
+        </member>
+        <member name="M:PeerTalk.Transports.Tcp.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Transports.Tcp.Listen(Ipfs.MultiAddress,System.Action{System.IO.Stream,Ipfs.MultiAddress,Ipfs.MultiAddress},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.Transports.Udp">
+            <summary>
+              Establishes a duplex stream between two peers
+              over UDP.
+            </summary>
+        </member>
+        <member name="M:PeerTalk.Transports.Udp.ConnectAsync(Ipfs.MultiAddress,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:PeerTalk.Transports.Udp.Listen(Ipfs.MultiAddress,System.Action{System.IO.Stream,Ipfs.MultiAddress,Ipfs.MultiAddress},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:PeerTalk.WhiteList`1">
+            <summary>
+              A sequence of targets that are approved.
+            </summary>
+            <typeparam name="T">
+              The type of object that the rule applies to.
+            </typeparam>
+            <remarks>
+              Only targets that are defined will pass.  If no targets are defined, then anything
+              passes.
+            </remarks>
+        </member>
+        <member name="M:PeerTalk.WhiteList`1.IsAllowed(`0)">
+            <inheritdoc />
+        </member>
+        <member name="T:JuiceStream.DuplexBufferedStream">
+            <summary>
+            .NET already has its <c>BufferedStream</c>, but that one will throw unexpected exceptions, especially on <c>NetworkStreams</c>.
+            JuiceStream's <c>DuplexBufferedStream</c> embeds two <c>BufferedStream</c> instances,
+            one for each direction, to provide full duplex buffering over non-seekable streams.
+            </summary>
+            <remarks>
+              Copied from <see href="https://bitbucket.org/robertvazan/juicestream/raw/2caa975524900d1b5a76ddd3731c273d5dbb51eb/JuiceStream/DuplexBufferedStream.cs"/>
+            </remarks>
+        </member>
+    </members>
+</doc>

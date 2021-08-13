@@ -1,0 +1,41 @@
+﻿
+@model FirstNFTProject.Models.UploadNftParameteres
+
+<h2>Upload your ART Here</h2>
+
+<div>
+    @using (Html.BeginForm("Upload", "nft", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        <span>Select File:</span>
+        <input type="file" name="postedFile" />
+        <hr />
+        <label>NFT Name</label>
+        @Html.TextBoxFor(m => m.NFTName)
+        
+        <label>NFT Symbol</label>
+        @Html.TextBoxFor(m => m.NFTSymbol)
+        
+        <input type="submit" value="Upload" />
+        <br />
+        <span style="color:green">@TempData["Message"]</span>
+    }
+</div>
+
+
+@*<div class="col-md-4">
+        <img class="profile-user-img img-responsive img-circle" src="">
+        <br>
+
+        <input type="file" name="InputProfileImage" id="InputProfileImage" accept="image/jpg,image/png,image/jpeg">
+
+        <input type="submit" value="Upload" id="Upload_btn" name="">
+
+    </div>*@
+
+
+
+
+
+
+
+

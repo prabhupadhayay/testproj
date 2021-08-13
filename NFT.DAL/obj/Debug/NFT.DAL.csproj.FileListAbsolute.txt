@@ -1,0 +1,12 @@
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\NFT.DAL.dll.config
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\NFT.DAL.dll
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\NFT.DAL.pdb
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\EntityFramework.dll
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\EntityFramework.SqlServer.dll
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\EntityFramework.xml
+D:\BlockChain\FirstNFTProject\NFT.DAL\bin\Debug\EntityFramework.SqlServer.xml
+D:\BlockChain\FirstNFTProject\NFT.DAL\obj\Debug\NFT.DAL.csproj.AssemblyReference.cache
+D:\BlockChain\FirstNFTProject\NFT.DAL\obj\Debug\NFT.DAL.csproj.CoreCompileInputs.cache
+D:\BlockChain\FirstNFTProject\NFT.DAL\obj\Debug\NFT.DAL.csproj.CopyComplete
+D:\BlockChain\FirstNFTProject\NFT.DAL\obj\Debug\NFT.DAL.dll
+D:\BlockChain\FirstNFTProject\NFT.DAL\obj\Debug\NFT.DAL.pdb

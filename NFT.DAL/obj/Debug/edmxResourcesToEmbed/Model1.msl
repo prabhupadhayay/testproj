@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="NFTProjectModelStoreContainer" CdmEntityContainer="NFTProjectEntities">
+    <EntitySetMapping Name="Users">
+      <EntityTypeMapping TypeName="NFTProjectModel.User">
+        <MappingFragment StoreEntitySet="Users">
+          <ScalarProperty Name="UserId" ColumnName="UserId" />
+          <ScalarProperty Name="WalletAddress" ColumnName="WalletAddress" />
+          <ScalarProperty Name="Email" ColumnName="Email" />
+          <ScalarProperty Name="IsDeleted" ColumnName="IsDeleted" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="NFTLedgers">
+      <EntityTypeMapping TypeName="NFTProjectModel.NFTLedger">
+        <MappingFragment StoreEntitySet="NFTLedger">
+          <ScalarProperty Name="Price" ColumnName="Price" />
+          <ScalarProperty Name="TransferTo" ColumnName="TransferTo" />
+          <ScalarProperty Name="TransferFrom" ColumnName="TransferFrom" />
+          <ScalarProperty Name="CurrentOwner" ColumnName="CurrentOwner" />
+          <ScalarProperty Name="SmartContractId" ColumnName="SmartContractId" />
+          <ScalarProperty Name="Id" ColumnName="Id" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Items">
+      <EntityTypeMapping TypeName="NFTProjectModel.Item">
+        <MappingFragment StoreEntitySet="Items">
+          <ScalarProperty Name="ItemSymbol" ColumnName="ItemSymbol" />
+          <ScalarProperty Name="ItemName" ColumnName="ItemName" />
+          <ScalarProperty Name="ItemDescription" ColumnName="ItemDescription" />
+          <ScalarProperty Name="ItemHash" ColumnName="ItemHash" />
+          <ScalarProperty Name="UserId" ColumnName="UserId" />
+          <ScalarProperty Name="ItemId" ColumnName="ItemId" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Approvenfts">
+      <EntityTypeMapping TypeName="NFTProjectModel.Approvenft">
+        <MappingFragment StoreEntitySet="Approvenft">
+          <ScalarProperty Name="updateDatetime" ColumnName="updateDatetime" />
+          <ScalarProperty Name="createDateTime" ColumnName="createDateTime" />
+          <ScalarProperty Name="IsApproved" ColumnName="IsApproved" />
+          <ScalarProperty Name="ToCurrentOwnerAddress" ColumnName="ToCurrentOwnerAddress" />
+          <ScalarProperty Name="FromAddress" ColumnName="FromAddress" />
+          <ScalarProperty Name="DeployedNFTId" ColumnName="DeployedNFTId" />
+          <ScalarProperty Name="Id" ColumnName="Id" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="deployednfts">
+      <EntityTypeMapping TypeName="NFTProjectModel.deployednft">
+        <MappingFragment StoreEntitySet="deployednft">
+          <ScalarProperty Name="IsSold" ColumnName="IsSold" />
+          <ScalarProperty Name="IsApproved" ColumnName="IsApproved" />
+          <ScalarProperty Name="IsVerified" ColumnName="IsVerified" />
+          <ScalarProperty Name="OwnerWalletAddress" ColumnName="OwnerWalletAddress" />
+          <ScalarProperty Name="ContractAddress" ColumnName="ContractAddress" />
+          <ScalarProperty Name="TransactionHash" ColumnName="TransactionHash" />
+          <ScalarProperty Name="DeployedDatetime" ColumnName="DeployedDatetime" />
+          <ScalarProperty Name="GasPrice" ColumnName="GasPrice" />
+          <ScalarProperty Name="ABI" ColumnName="ABI" />
+          <ScalarProperty Name="ItemId" ColumnName="ItemId" />
+          <ScalarProperty Name="Id" ColumnName="Id" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>

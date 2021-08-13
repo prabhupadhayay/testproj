@@ -1,0 +1,21 @@
+Its is asking to login via Meta mask, where do I signup on site ?
+Its already connected by metamask thats why it is automatically sigining in
+ called all the methods to deploy smart contract and mint .
+pending - 1.transfer
+
+We dont need login / signup vioa meta mask. Meta makks is just for payment
+How do I signup to the website ?
+For signup - we just need wallet address and we are getting it from metamask 
+I can add a manual field of wallet address though .but this is what we need to login to opensea also
+Open opensea.op
+
+We shall get user / password model on sigup and have user fill manual wallet address he has from any ETH supported wallet. 
+But dont puut energy on that now. as we need prototype this week. Meta Mask is ok for now.ok
+
+I see it same how we discussed before. How is selling going . the form we discussed .Working on it .as I find better .here is the different methods available for transfer ownership . we will mint to first owner than we will transfer that token to third/fourth by owner's approval .
+
+
+who has rights to transfer ?
+the contract creator on this platform (platform has all the rights through all transactions)
+ok so creator of the NFT and platform both can transfer and Creator can list his nft to any other platform as well ?
+yes

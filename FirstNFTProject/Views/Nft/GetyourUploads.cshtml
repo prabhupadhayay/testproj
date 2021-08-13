@@ -1,0 +1,43 @@
+﻿
+@model IEnumerable<FirstNFTProject.Models.ImageModel>
+
+
+<h2>Your Uploads</h2>
+
+@if (Model != null)
+{
+    foreach (var item in Model)
+    {
+        <div class="wrapper">
+            <div class="left">
+                <iframe frameborder="0" scrolling="no" width="100%" height="100%"
+                        src="@item.ImageUrl" name="imgbox" id="imgbox">
+                    <p>iframes are not supported by your browser.</p>
+                </iframe>
+            </div>
+            <div class="Right">
+                <h4>NFT Name </h4>
+                <p> @item.NFTName</p>
+                <h4>NFT Symbol </h4>
+                <p>@item.NFTSymbol </p>
+
+                <a href='@Url.Action("SellNFT","nft",new {  ItemId = item.ItemId})' class="buybtn" title="Sell NFT" data-toggle="tooltip">Create NFT</a>
+            </div>
+            <br />
+            </div>
+            }
+            }
+
+            <br />
+            <br />
+            <br />
+            <div class="createbtn">
+
+                @Html.ActionLink("Upload Art", "uploadtoIPFS")
+
+
+            </div>
+
+
+
+
